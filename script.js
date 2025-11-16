@@ -14,50 +14,40 @@
     let mis_peliculas = [];
 
     const postAPI = async (peliculas) => {
+        // Store directly in localStorage as primary storage
+        const localStorageKey = 'peliculas_data';
         try {
-        const res = await fetch("https://myjson.dit.upm.es/api/bins", {
-          method: 'POST', 
-          headers:{
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify(peliculas)
-        });
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const {uri} = await res.json();
-        return uri;               
+            localStorage.setItem(localStorageKey, JSON.stringify(peliculas));
+            return localStorageKey;
         } catch (err) {
-        alert("No se ha podido crear el endpoint.")
+            console.error("Error storing data in localStorage:", err);
+            alert("No se ha podido guardar la información localmente.");
+            return null;
         }
     }
     const getAPI = async () => {
         try {
-        if (!localStorage.URL) return [];
-        const res = await fetch(localStorage.URL);
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return await res.json();
+            if (!localStorage.URL) return [];
+            // Read directly from localStorage
+            const data = localStorage.getItem(localStorage.URL);
+            if (!data) return [];
+            return JSON.parse(data);
         } catch (err) {
-        alert("No se ha podido leer la información.");
-        return [];
+            console.error("Error reading data from localStorage:", err);
+            alert("No se ha podido leer la información.");
+            return [];
         }
     }
     const updateAPI = async (peliculas) => {
         try {
-        const res = await fetch(localStorage.URL, {
-            method: 'PUT',
-            headers: {
-            "Content-Type": "application/json",
-            },
-            body: JSON.stringify(peliculas)
-        });
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
+            if (!localStorage.URL) {
+                throw new Error("No storage key found");
+            }
+            // Update directly in localStorage
+            localStorage.setItem(localStorage.URL, JSON.stringify(peliculas));
         } catch (err) {
-        alert("No se ha podido actualizar la información.");
+            console.error("Error updating data in localStorage:", err);
+            alert("No se ha podido actualizar la información.");
         }
     }
 
