@@ -22,6 +22,9 @@
           },
           body: JSON.stringify(peliculas)
         });
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const {uri} = await res.json();
         return uri;               
         } catch (err) {
@@ -32,6 +35,9 @@
         try {
         if (!localStorage.URL) return [];
         const res = await fetch(localStorage.URL);
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
         return await res.json();
         } catch (err) {
         alert("No se ha podido leer la información.");
@@ -40,13 +46,16 @@
     }
     const updateAPI = async (peliculas) => {
         try {
-        await fetch(localStorage.URL, {
+        const res = await fetch(localStorage.URL, {
             method: 'PUT',
             headers: {
             "Content-Type": "application/json",
             },
             body: JSON.stringify(peliculas)
         });
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
         } catch (err) {
         alert("No se ha podido actualizar la información.");
         }
@@ -61,6 +70,9 @@
                     'Content-Type': 'application/json'
                 }
             });
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
             const data = await res.json();
             return data.results || [];
         } catch (err) {
@@ -77,6 +89,9 @@
                     'Content-Type': 'application/json'
                 }
             });
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
             return await res.json();
         } catch (err) {
             alert("No se ha podido obtener detalles de la película.");
