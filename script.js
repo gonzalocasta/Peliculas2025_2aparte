@@ -6,9 +6,9 @@
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
     let mis_peliculas_iniciales = [
-       {titulo: "Superlópez",   director: "Javier Ruiz Caldera", "miniatura": "files/superlopez.png"},
-       {titulo: "Jurassic Park", director: "Steven Spielberg", "miniatura": "files/jurassicpark.png"},
-       {titulo: "Interstellar",  director: "Christopher Nolan", "miniatura": "files/interstellar.png"}
+       {titulo: "Superlópez",   director: "Javier Ruiz Caldera", "miniatura": "files/superlopez.svg"},
+       {titulo: "Jurassic Park", director: "Steven Spielberg", "miniatura": "files/jurassicpark.svg"},
+       {titulo: "Interstellar",  director: "Christopher Nolan", "miniatura": "files/interstellar.svg"}
     ];
 
     let mis_peliculas = [];
@@ -99,7 +99,7 @@
           view += `
         <div class="movie">
            <div class="movie-img">
-            <img class="show" data-my-id="${i}" src="${peliculas[i].miniatura}" onerror="this.src='files/placeholder.png'"/>
+            <img class="show" data-my-id="${i}" src="${peliculas[i].miniatura}" onerror="this.src='files/placeholder.svg'"/>
            </div>
            <div class="title">
                ${peliculas[i].titulo || "<em>Sin título</em>"}
@@ -152,7 +152,7 @@
         return `
          <h2>${pelicula.titulo || "<em>Sin título</em>"}</h2>
          <div>
-        <img src="${pelicula.miniatura}" onerror="this.src='files/placeholder.png'" style="max-width:200px"/>
+        <img src="${pelicula.miniatura}" onerror="this.src='files/placeholder.svg'" style="max-width:200px"/>
          </div>
          <p><strong>Director:</strong> ${pelicula.director || "<em>Sin director</em>"}</p>
          <div class="actions">
@@ -188,11 +188,11 @@
             searchResults.forEach((movie, index) => {
                 const posterUrl = movie.poster_path 
                     ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}` 
-                    : 'files/placeholder.png';
+                    : 'files/placeholder.svg';
                 resultsHtml += `
                 <div class="movie" style="max-width: 200px;">
                     <div class="movie-img">
-                        <img src="${posterUrl}" onerror="this.src='files/placeholder.png'" alt="${movie.title}"/>
+                        <img src="${posterUrl}" onerror="this.src='files/placeholder.svg'" alt="${movie.title}"/>
                     </div>
                     <div class="title">${movie.title}</div>
                     <div style="font-size: 10px; color: #666; margin: 5px 0;">
@@ -301,7 +301,7 @@
         const director = movieDetails.credits?.crew?.find(person => person.job === 'Director')?.name || 'Desconocido';
         const posterUrl = movieDetails.poster_path 
             ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}` 
-            : 'files/placeholder.png';
+            : 'files/placeholder.svg';
 
         const newMovie = {
             titulo: movieDetails.title,
