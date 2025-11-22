@@ -1,344 +1,438 @@
-// MODELO DE DATOS
+// --- CONFIGURACIÓN Y MODELO DE DATOS ---
 
-    // TMDb API Configuration
-    const TMDB_API_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzOTgxNWVjZTI4ZjcyNWJlZGRmY2Y3OGE0YzRjZGU0ZiIsIm5iZiI6MTc2MDQ1NjUxNS4xNDcsInN1YiI6IjY4ZWU2ZjQzNDYzMzQ0Yjg0MTlkZjQ3MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.ejdXz4pm0dZn0OAVJvJ16R8SwNAa-MBkO_yttUiblLk';
-    const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-    const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const TMDB_API_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzOTgxNWVjZTI4ZjcyNWJlZGRmY2Y3OGE0YzRjZGU0ZiIsIm5iZiI6MTc2MDQ1NjUxNS4xNDcsInN1YiI6IjY4ZWU2ZjQzNDYzMzQ0Yjg0MTlkZjQ3MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.ejdXz4pm0dZn0OAVJvJ16R8SwNAa-MBkO_yttUiblLk';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
-    let mis_peliculas_iniciales = [
-       {titulo: "Superlópez",   director: "Javier Ruiz Caldera", "miniatura": "files/superlopez.png"},
-       {titulo: "Jurassic Park", director: "Steven Spielberg", "miniatura": "files/jurassicpark.png"},
-       {titulo: "Interstellar",  director: "Christopher Nolan", "miniatura": "files/interstellar.png"}
-    ];
+// Iniciamos con listas vacías
+let mis_peliculas_iniciales = [];
+let mis_peliculas = [];
+let mis_palabras_clave = [];
 
-    let mis_peliculas = [];
+// --- GESTIÓN DE ALMACENAMIENTO (LOCALSTORAGE) ---
 
-    const postAPI = async (peliculas) => {
-        // Store directly in localStorage as primary storage
-        const localStorageKey = 'peliculas_data';
-        try {
-            localStorage.setItem(localStorageKey, JSON.stringify(peliculas));
-            return localStorageKey;
-        } catch (err) {
-            console.error("Error storing data in localStorage:", err);
-            alert("No se ha podido guardar la información localmente.");
-            return null;
-        }
+const postAPI = async (peliculas) => {
+    try {
+        localStorage.setItem('peliculas_data', JSON.stringify(peliculas));
+        return 'peliculas_data';
+    } catch (err) {
+        console.error("Error guardando:", err);
+        return null;
     }
-    const getAPI = async () => {
-        try {
-            if (!localStorage.URL) return [];
-            // Read directly from localStorage
-            const data = localStorage.getItem(localStorage.URL);
-            if (!data) return [];
-            return JSON.parse(data);
-        } catch (err) {
-            console.error("Error reading data from localStorage:", err);
-            alert("No se ha podido leer la información.");
-            return [];
-        }
+}
+
+const getAPI = async () => {
+    try {
+        const moviesData = localStorage.getItem('peliculas_data') || '[]';
+        mis_peliculas = JSON.parse(moviesData);
+        
+        const keywordsData = localStorage.getItem('mis_palabras_clave') || '[]';
+        mis_palabras_clave = JSON.parse(keywordsData);
+
+        return mis_peliculas;
+    } catch (err) {
+        console.error("Error leyendo:", err);
+        return [];
     }
-    const updateAPI = async (peliculas) => {
-        try {
-            if (!localStorage.URL) {
-                throw new Error("No storage key found");
-            }
-            // Update directly in localStorage
-            localStorage.setItem(localStorage.URL, JSON.stringify(peliculas));
-        } catch (err) {
-            console.error("Error updating data in localStorage:", err);
-            alert("No se ha podido actualizar la información.");
-        }
+}
+
+const updateAPI = async (peliculas) => {
+    try {
+        localStorage.setItem('peliculas_data', JSON.stringify(peliculas));
+    } catch (err) {
+        console.error("Error actualizando películas:", err);
     }
+}
 
-    // TMDb API Functions
-    const searchMovies = async (query) => {
-        try {
-            const res = await fetch(`${TMDB_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`, {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            const data = await res.json();
-            return data.results || [];
-        } catch (err) {
-            alert("No se ha podido buscar películas en TMDb.");
-            return [];
-        }
+// Gestión de Lista Personalizada de Keywords
+const addKeywordToList = async (keyword) => {
+    if (!mis_palabras_clave.includes(keyword)) {
+        mis_palabras_clave.push(keyword);
+        localStorage.setItem('mis_palabras_clave', JSON.stringify(mis_palabras_clave));
+        return true;
     }
+    return false;
+}
 
-    const getMovieDetails = async (movieId) => {
-        try {
-            const res = await fetch(`${TMDB_BASE_URL}/movie/${movieId}?append_to_response=credits`, {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return await res.json();
-        } catch (err) {
-            alert("No se ha podido obtener detalles de la película.");
-            return null;
-        }
+const removeKeywordFromList = async (index) => {
+    mis_palabras_clave.splice(index, 1);
+    localStorage.setItem('mis_palabras_clave', JSON.stringify(mis_palabras_clave));
+}
+
+// --- API CLIENT (TMDb) ---
+
+const searchMovies = async (query) => {
+    try {
+        const res = await fetch(`${TMDB_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`, {
+            headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        return data.results || [];
+    } catch (err) {
+        console.error(err);
+        return [];
     }
+}
 
-    // VISTAS
-
-    const indexView = (peliculas) => {
-        let i=0;
-        let view = "";
-
-        while(i < peliculas.length) {
-          view += `
-        <div class="movie">
-           <div class="movie-img">
-            <img class="show" data-my-id="${i}" src="${peliculas[i].miniatura}" onerror="this.src='files/placeholder.png'"/>
-           </div>
-           <div class="title">
-               ${peliculas[i].titulo || "<em>Sin título</em>"}
-           </div>
-           <div class="actions">
-               <button class="edit" data-my-id="${i}">editar</button>
-               <button class="delete" data-my-id="${i}">borrar</button>
-            </div>
-        </div>\n`;
-          i = i + 1;
-        };
-
-        view += `<div class="actions">
-            <button class="new">Añadir</button>
-            <button class="search">Buscar en TMDb</button>
-            <button class="reset">Reset</button>
-            </div>`;
-
-        return view;
+const getMovieDetails = async (movieId) => {
+    try {
+        const res = await fetch(`${TMDB_BASE_URL}/movie/${movieId}?append_to_response=credits`, {
+            headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Content-Type': 'application/json' }
+        });
+        return await res.json();
+    } catch (err) {
+        console.error(err);
+        return null;
     }
+}
 
-    const editView = (i, pelicula) => {
-        return `<h2>Editar Película </h2>
-        <div class="field">
-        Título <br>
-        <input  type="text" id="titulo" placeholder="Título" 
-            value="${pelicula.titulo}">
-        </div>
-        <div class="field">
-        Director <br>
-        <input  type="text" id="director" placeholder="Director" 
-            value="${pelicula.director}">
-        </div>
-        <div class="field">
-        Miniatura <br>
-        <input  type="text" id="miniatura" placeholder="URL de la miniatura" 
-            value="${pelicula.miniatura}">
-        </div>
-        <div class="actions">
-            <button class="update" data-my-id="${i}">
-            Actualizar
-            </button>
-            <button class="index">
-            Volver
-            </button>
-           `;
+const getMovieKeywords = async (movieId) => {
+    try {
+        const res = await fetch(`${TMDB_BASE_URL}/movie/${movieId}/keywords`, {
+            headers: { 'Authorization': `Bearer ${TMDB_API_KEY}`, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        return data.keywords || []; 
+    } catch (err) {
+        console.error("Error obteniendo keywords:", err);
+        return [];
     }
+}
 
-    const showView = (pelicula) => {
-        return `
-         <h2>${pelicula.titulo || "<em>Sin título</em>"}</h2>
-         <div>
-        <img src="${pelicula.miniatura}" onerror="this.src='files/placeholder.png'" style="max-width:200px"/>
-         </div>
-         <p><strong>Director:</strong> ${pelicula.director || "<em>Sin director</em>"}</p>
-         <div class="actions">
-        <button class="index">Volver</button>
-         </div>`;
-    }
+// Lógica de Limpieza (Regex)
+const processKeywords = (keywords) => {
+    const cleanedList = [];
+    keywords.forEach(item => {
+        let cleanWord = item.name
+            .replace(/[^a-zñáéíóú0-9 ]+/igm, "") // Eliminar caracteres raros
+            .trim()
+            .toLowerCase();
+        if (cleanWord) cleanedList.push(cleanWord);
+    });
+    return cleanedList;
+}
 
-    const newView = () => {
-        return `<h2>Crear Película</h2>
-        <div class="field">
-            Título <br>
-            <input type="text" id="titulo" placeholder="Título">
-        </div>
-        <div class="field">
-            Director <br>
-            <input type="text" id="director" placeholder="Director">
-        </div>
-        <div class="field">
-            Miniatura <br>
-            <input type="text" id="miniatura" placeholder="URL de la miniatura">
-        </div>
-        <div class="actions">
-            <button class="create">Crear</button>
-            <button class="index">Volver</button>
+// --- VISTAS (UI - DISEÑO PROFESIONAL) ---
+
+const indexView = (peliculas) => {
+    let view = "";
+    if (peliculas.length === 0) {
+        view += `
+        <div style="grid-column: 1/-1; text-align:center; padding: 60px;">
+            <h2 style="color: var(--text-secondary); font-weight:300;">Tu colección está vacía 🍿</h2>
+            <p style="color: var(--text-secondary);">Usa el buscador para empezar a añadir películas.</p>
         </div>`;
+    } else {
+        peliculas.forEach((pelicula, i) => {
+            view += `
+            <div class="movie">
+               <div class="movie-img">
+                   <img class="show" data-my-id="${i}" src="${pelicula.miniatura}" onerror="this.src='files/placeholder.png'"/>
+               </div>
+               <div class="title">${pelicula.titulo || "<em>Sin título</em>"}</div>
+               <p>${pelicula.director || "Director desconocido"}</p>
+               <div class="actions">
+                   <button class="edit" data-my-id="${i}">Editar</button>
+                   <button class="keywords" data-my-id="${i}">Keywords</button>
+                   <button class="delete" data-my-id="${i}">Borrar</button>
+                </div>
+            </div>`;
+        });
     }
 
-    const searchView = (searchResults = []) => {
-        let resultsHtml = '';
+    view += `<div class="actions">
+        <button class="search">🔍 Buscar TMDb</button>
+        <button class="new">➕ Añadir Manual</button>
+        <button class="my-keywords">🏷️ Mis Keywords</button>
+        <button class="reset">🗑️ Resetear</button>
+        </div>`;
+
+    return view;
+}
+
+const searchView = (searchResults = []) => {
+    let resultsHtml = '';
+    if (searchResults.length > 0) {
+        // Grid interno para los resultados
+        resultsHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; width: 100%;">';
         
-        if (searchResults.length > 0) {
-            resultsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
-            searchResults.forEach((movie, index) => {
-                const posterUrl = movie.poster_path 
-                    ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}` 
-                    : 'files/placeholder.png';
-                resultsHtml += `
-                <div class="movie" style="max-width: 200px;">
-                    <div class="movie-img">
-                        <img src="${posterUrl}" onerror="this.src='files/placeholder.png'" alt="${movie.title}"/>
-                    </div>
-                    <div class="title">${movie.title}</div>
-                    <div style="font-size: 10px; color: #666; margin: 5px 0;">
-                        ${movie.release_date ? movie.release_date.substring(0, 4) : 'N/A'}
-                    </div>
-                    <div class="actions">
-                        <button class="add-from-search" data-movie-id="${movie.id}">Añadir</button>
-                    </div>
-                </div>`;
-            });
-            resultsHtml += '</div>';
-        } else if (searchResults.length === 0 && document.getElementById('search-input')) {
-            resultsHtml = '<p>No se encontraron resultados.</p>';
-        }
-        
-        return `<h2>Buscar Película en TMDb</h2>
+        searchResults.forEach((movie) => {
+            const posterUrl = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}` : 'files/placeholder.png';
+            
+            // Tags de keywords
+            const keywordsHtml = movie.mis_keywords && movie.mis_keywords.length > 0 
+                ? movie.mis_keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')
+                : '';
+
+            resultsHtml += `
+            <div class="movie">
+                <div class="movie-img">
+                    <img src="${posterUrl}" style="width:100%; height:100%; object-fit:cover;"/>
+                </div>
+                <div class="title" style="font-size: 0.9rem;">${movie.title}</div>
+                <div style="padding: 0 15px 10px 15px;">
+                    ${keywordsHtml}
+                </div>
+                <div class="actions">
+                    <button class="add-from-search" data-movie-id="${movie.id}">Añadir</button>
+                </div>
+            </div>`;
+        });
+        resultsHtml += '</div>';
+    }
+    
+    // Usamos keywords-container para dar estilo de "tarjeta grande" al formulario
+    return `
+    <div class="keywords-container" style="max-width: 1000px;">
+        <h2>Buscar en TMDb</h2>
         <div class="field">
-            <input type="text" id="search-input" placeholder="Buscar película..." 
-                style="width: 300px; padding: 8px; font-size: 14px;">
-            <button class="search-tmdb" style="padding: 8px 16px; margin-left: 5px;">Buscar</button>
+            <input type="text" id="search-input" placeholder="Escribe el nombre de la película...">
         </div>
-        <div id="search-results" style="margin-top: 20px;">
-            ${resultsHtml}
+        <div class="actions" style="justify-content: flex-start; margin-bottom: 20px; border-top: none;">
+             <button class="search-tmdb">Buscar</button>
+             <button class="index" style="background: transparent; border: 1px solid #fff;">Cancelar</button>
         </div>
+        <div id="search-results">${resultsHtml}</div>
+    </div>`;
+}
+
+const keywordsView = (pelicula, keywordsList) => {
+    let listHtml = '';
+    if (keywordsList.length > 0) {
+        listHtml = '<ul class="keywords-list-ui">';
+        keywordsList.forEach(word => {
+            listHtml += `
+            <li>
+                <span class="keyword-text">${word}</span>
+                <button class="add-keyword" data-word="${word}">Guardar</button>
+            </li>`;
+        });
+        listHtml += '</ul>';
+    } else {
+        listHtml = '<p style="color: #94a3b8;">No hay palabras clave disponibles.</p>';
+    }
+
+    return `
+    <div class="keywords-container">
+        <h2>Palabras clave: <span style="color:var(--accent)">${pelicula.titulo}</span></h2>
+        ${listHtml}
         <div class="actions" style="margin-top: 20px;">
             <button class="index">Volver</button>
-        </div>`;
+        </div>
+    </div>`;
+}
+
+const myKeywordsView = () => {
+    let listHtml = '';
+    if (mis_palabras_clave.length > 0) {
+        listHtml = '<ul class="keywords-list-ui">';
+        mis_palabras_clave.forEach((word, index) => {
+            listHtml += `
+            <li>
+                <span class="keyword-text">${word}</span>
+                <button class="remove-keyword" data-index="${index}">Eliminar</button>
+            </li>`;
+        });
+        listHtml += '</ul>';
+    } else {
+        listHtml = '<div style="padding:20px; text-align:center; color: #94a3b8;">No has guardado ninguna palabra clave todavía.</div>';
     }
 
-    // CONTROLADORES 
+    return `
+    <div class="keywords-container">
+        <h2>Mi Lista de Palabras Clave</h2>
+        ${listHtml}
+        <div class="actions" style="margin-top: 20px;">
+            <button class="index">Volver al Inicio</button>
+        </div>
+    </div>`;
+}
 
-    const initContr = async () => {
-        if (!localStorage.URL || localStorage.URL === "undefined") {
-        localStorage.URL = await postAPI(mis_peliculas_iniciales);
-        }
-        indexContr();
+const editView = (i, pelicula) => {
+    return `
+    <div class="keywords-container">
+        <h2>Editar Película</h2>
+        <div class="field">Título <br><input type="text" id="titulo" value="${pelicula.titulo}"></div>
+        <div class="field">Director <br><input type="text" id="director" value="${pelicula.director}"></div>
+        <div class="field">Miniatura <br><input type="text" id="miniatura" value="${pelicula.miniatura}"></div>
+        <div class="actions">
+            <button class="update" data-my-id="${i}">Actualizar</button>
+            <button class="index" style="background:transparent; border:1px solid #fff;">Cancelar</button>
+        </div>
+    </div>`;
+}
+
+const showView = (pelicula) => {
+    return `
+    <div class="keywords-container" style="text-align:center;">
+     <h2>${pelicula.titulo}</h2>
+     <div style="margin: 20px 0;">
+        <img src="${pelicula.miniatura}" onerror="this.src='files/placeholder.png'" style="max-width:300px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"/>
+     </div>
+     <p><strong>Director:</strong> ${pelicula.director}</p>
+     <div class="actions"><button class="index">Volver</button></div>
+    </div>`;
+}
+
+const newView = () => {
+    return `
+    <div class="keywords-container">
+        <h2>Crear Película Manual</h2>
+        <div class="field">Título <br><input type="text" id="titulo" placeholder="Ej. Matrix"></div>
+        <div class="field">Director <br><input type="text" id="director" placeholder="Ej. Wachowski Sisters"></div>
+        <div class="field">Miniatura <br><input type="text" id="miniatura" placeholder="URL de imagen"></div>
+        <div class="actions">
+            <button class="create">Crear</button>
+            <button class="index" style="background:transparent; border:1px solid #fff;">Cancelar</button>
+        </div>
+    </div>`;
+}
+
+// --- CONTROLADORES (LÓGICA) ---
+
+const initContr = async () => {
+    if (!localStorage.getItem('peliculas_data')) {
+        await postAPI(mis_peliculas_iniciales);
     }
+    await indexContr();
+}
 
-    const indexContr = async () => {
-        mis_peliculas = await getAPI() || [];
-        document.getElementById('main').innerHTML = await indexView(mis_peliculas);
-    }
+const indexContr = async () => {
+    mis_peliculas = await getAPI();
+    document.getElementById('main').innerHTML = indexView(mis_peliculas);
+}
 
-    const showContr = (i) => {
-        document.getElementById('main').innerHTML = showView(mis_peliculas[i]);
-    }
+const showContr = (i) => { document.getElementById('main').innerHTML = showView(mis_peliculas[i]); }
+const newContr = () => { document.getElementById('main').innerHTML = newView(); }
+const editContr = (i) => { document.getElementById('main').innerHTML = editView(i, mis_peliculas[i]); }
+const searchContr = () => { document.getElementById('main').innerHTML = searchView(); }
+const myKeywordsContr = () => { document.getElementById('main').innerHTML = myKeywordsView(); }
 
-    const newContr = () => {
-        document.getElementById('main').innerHTML = newView();
-    }
+const createContr = async () => {
+    const titulo = document.getElementById('titulo').value;
+    const director = document.getElementById('director').value;
+    const miniatura = document.getElementById('miniatura').value;
+    mis_peliculas.push({titulo, director, miniatura, id: null});
+    await updateAPI(mis_peliculas);
+    indexContr();
+}
 
-    const createContr = async () => {
-        const titulo = document.getElementById('titulo').value;
-        const director = document.getElementById('director').value;
-        const miniatura = document.getElementById('miniatura').value;
-        mis_peliculas.push({titulo, director, miniatura});
-        await updateAPI(mis_peliculas);
-        indexContr();
-    }
+const updateContr = async (i) => {
+    mis_peliculas[i].titulo = document.getElementById('titulo').value;
+    mis_peliculas[i].director = document.getElementById('director').value;
+    mis_peliculas[i].miniatura = document.getElementById('miniatura').value;
+    await updateAPI(mis_peliculas);
+    indexContr();
+}
 
-    const editContr = (i) => {
-        document.getElementById('main').innerHTML = editView(i,  mis_peliculas[i]);
-    }
-
-    const updateContr = async (i) => {
-        mis_peliculas[i].titulo   = document.getElementById('titulo').value;
-        mis_peliculas[i].director = document.getElementById('director').value;
-        mis_peliculas[i].miniatura = document.getElementById('miniatura').value;
-        await updateAPI(mis_peliculas);
-        indexContr();
-    }
-
-    const deleteContr = async (i) => {
-        if (confirm("¿Seguro que quieres borrar esta película?")) {
+const deleteContr = async (i) => {
+    if (confirm("¿Seguro que quieres eliminar esta película?")) {
         mis_peliculas.splice(i, 1);
         await updateAPI(mis_peliculas);
         indexContr();
-        }
     }
+}
 
-    const resetContr = async () => {
-        if (confirm("¿Seguro que quieres reiniciar la lista de películas?")) {
-        await updateAPI(mis_peliculas_iniciales);
-        indexContr();
-        }
-    }
-
-    const searchContr = () => {
-        document.getElementById('main').innerHTML = searchView();
-    }
-
-    const searchTMDbContr = async () => {
-        const query = document.getElementById('search-input').value;
-        if (!query.trim()) {
-            alert("Por favor, introduce un término de búsqueda.");
-            return;
-        }
-        const results = await searchMovies(query);
-        document.getElementById('main').innerHTML = searchView(results);
-    }
-
-    const addFromSearchContr = async (movieId) => {
-        const movieDetails = await getMovieDetails(movieId);
-        if (!movieDetails) return;
-
-        const director = movieDetails.credits?.crew?.find(person => person.job === 'Director')?.name || 'Desconocido';
-        const posterUrl = movieDetails.poster_path 
-            ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}` 
-            : 'files/placeholder.png';
-
-        const newMovie = {
-            titulo: movieDetails.title,
-            director: director,
-            miniatura: posterUrl
-        };
-
-        mis_peliculas.push(newMovie);
-        await updateAPI(mis_peliculas);
-        alert(`"${movieDetails.title}" añadida a tu lista!`);
+const resetContr = async () => {
+    if (confirm("¿Borrar TODA la colección y reiniciar?")) {
+        await postAPI([]); // Reinicia a vacío
+        localStorage.removeItem('mis_palabras_clave');
         indexContr();
     }
+}
 
-    // ROUTER de eventos
-    const matchEvent = (ev, sel) => ev.target.matches(sel)
-    const myId = (ev) => Number(ev.target.dataset.myId)
-
-    document.addEventListener('click', ev => {
-        if      (matchEvent(ev, '.index'))  indexContr  ();
-        else if (matchEvent(ev, '.edit'))   editContr   (myId(ev));
-        else if (matchEvent(ev, '.update')) updateContr (myId(ev));
-        else if (matchEvent(ev, '.show'))   showContr   (myId(ev));
-        else if (matchEvent(ev, '.new'))    newContr    ();
-        else if (matchEvent(ev, '.create')) createContr ();
-        else if (matchEvent(ev, '.delete')) deleteContr (myId(ev));
-        else if (matchEvent(ev, '.reset'))  resetContr  ();
-        else if (matchEvent(ev, '.search')) searchContr ();
-        else if (matchEvent(ev, '.search-tmdb')) searchTMDbContr ();
-        else if (matchEvent(ev, '.add-from-search')) addFromSearchContr (ev.target.dataset.movieId);
-    })
-
-    document.addEventListener('keypress', ev => {
-        if (ev.key === 'Enter' && ev.target.id === 'search-input') {
-            searchTMDbContr();
-        }
-    })
+const searchTMDbContr = async () => {
+    const query = document.getElementById('search-input').value;
+    if (!query) return;
     
+    document.getElementById('search-results').innerHTML = '<p style="text-align:center; color:#fff;">Buscando en el universo de películas...</p>';
     
-    // Inicialización        
-    document.addEventListener('DOMContentLoaded', initContr);
+    const results = await searchMovies(query);
+    
+    // Enriquecer con Keywords (Parte 3)
+    const resultsWithKeywords = await Promise.all(results.map(async (movie) => {
+        const rawKeywords = await getMovieKeywords(movie.id);
+        const cleanKeywords = processKeywords(rawKeywords);
+        // Guardamos las primeras 3 para mostrar en la tarjeta
+        return { ...movie, mis_keywords: cleanKeywords.slice(0, 3) };
+    }));
+
+    document.getElementById('main').innerHTML = searchView(resultsWithKeywords);
+}
+
+const addFromSearchContr = async (movieId) => {
+    const movieDetails = await getMovieDetails(movieId);
+    if (!movieDetails) return;
+    
+    const director = movieDetails.credits?.crew?.find(p => p.job === 'Director')?.name || 'Desconocido';
+    const posterUrl = movieDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}` : 'files/placeholder.png';
+    
+    mis_peliculas.push({ 
+        titulo: movieDetails.title, 
+        director: director, 
+        miniatura: posterUrl, 
+        id: movieDetails.id 
+    });
+    
+    await updateAPI(mis_peliculas);
+    alert("¡Película añadida a tu colección!");
+    indexContr();
+}
+
+const keywordsContr = async (i) => {
+    const pelicula = mis_peliculas[i];
+    if (!pelicula.id) {
+        alert("Esta película se creó manualmente y no tiene conexión con TMDb.");
+        return;
+    }
+    
+    // Carga visual mientras esperamos
+    document.getElementById('main').innerHTML = `<div class="keywords-container"><p>Cargando keywords...</p></div>`;
+    
+    const rawKeywords = await getMovieKeywords(pelicula.id);
+    const processedKeywords = processKeywords(rawKeywords);
+    document.getElementById('main').innerHTML = keywordsView(pelicula, processedKeywords);
+}
+
+const addKeywordContr = async (keyword) => {
+    const added = await addKeywordToList(keyword);
+    if (added) alert(`"${keyword}" guardada.`);
+    else alert("Ya tienes esta palabra en tu lista.");
+}
+
+const removeKeywordContr = async (index) => {
+    await removeKeywordFromList(index);
+    myKeywordsContr(); // Recargar vista
+}
+
+// --- ROUTER DE EVENTOS ---
+const matchEvent = (ev, sel) => ev.target.matches(sel);
+const myId = (ev) => Number(ev.target.dataset.myId);
+
+document.addEventListener('click', ev => {
+    if      (matchEvent(ev, '.index'))     indexContr();
+    else if (matchEvent(ev, '.edit'))      editContr(myId(ev));
+    else if (matchEvent(ev, '.update'))    updateContr(myId(ev));
+    else if (matchEvent(ev, '.show'))      showContr(myId(ev));
+    else if (matchEvent(ev, '.new'))       newContr();
+    else if (matchEvent(ev, '.create'))    createContr();
+    else if (matchEvent(ev, '.delete'))    deleteContr(myId(ev));
+    else if (matchEvent(ev, '.reset'))     resetContr();
+    else if (matchEvent(ev, '.search'))    searchContr();
+    else if (matchEvent(ev, '.search-tmdb')) searchTMDbContr();
+    else if (matchEvent(ev, '.add-from-search')) addFromSearchContr(ev.target.dataset.movieId);
+    
+    // Eventos Parte 3
+    else if (matchEvent(ev, '.keywords'))    keywordsContr(myId(ev));
+    else if (matchEvent(ev, '.add-keyword')) addKeywordContr(ev.target.dataset.word);
+    else if (matchEvent(ev, '.my-keywords')) myKeywordsContr();
+    else if (matchEvent(ev, '.remove-keyword')) removeKeywordContr(Number(ev.target.dataset.index));
+});
+
+// Evento Enter para búsqueda
+document.addEventListener('keypress', ev => {
+    if (ev.key === 'Enter' && ev.target.id === 'search-input') searchTMDbContr();
+});
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', initContr);
